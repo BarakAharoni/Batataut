@@ -18,4 +18,4 @@ Use the script as follows:
 
  ```
  
- Copyright (c) 2022 Sun Obziler and Barak Aharoni.  All Rights Reserved.
+ Copyright (c) 2022 Barak Aharoni and Sun Obziler. All Rights Reserved.
