@@ -14,8 +14,7 @@ Find out which path in your file system running automaticly after restart => Aut
 Use the script as follows:
 ```
   1) Run and Restart: python batataut.py --spread --output <output-path> --restart
-  2) View Results:    python batataut.py --results --output <output-path> 
-  3) Cleanup:         python batataut.py --delete --output <output-path> 
+  2) Cleanup:         python batataut.py --delete --output <output-path> 
 
  ```
  
