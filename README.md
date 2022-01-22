@@ -1,5 +1,5 @@
 # Batataut
-## Active autorun detection usig batch scripts
+## Active autorun detection using batch scripts
 
 ```
 ________       _____       _____              _____ 
