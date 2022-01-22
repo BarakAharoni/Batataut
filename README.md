@@ -1,22 +1,15 @@
 # Batataut
 Active autorun detection usig batch scripts
 
-
-
-
-
-
-
-
-
-
+```
 ________       _____       _____              _____ 
 ___  __ )_____ __  /______ __  /______ ____  ___  /_
 __  __  |  __ `/  __/  __ `/  __/  __ `/  / / /  __/
 _  /_/ // /_/ // /_ / /_/ // /_ / /_/ // /_/ // /_  
 /_____/ \__,_/ \__/ \__,_/ \__/ \__,_/ \__,_/ \__/  
+   
+``` 
                                                     
-
 Find out which path in your file system running automaticly after restart => Autorun!
 Use the script as follow:
   1) Run and Restart: python batataut.py --spread --output <output-path> --restart
