@@ -1,6 +1,5 @@
 # Batataut
-Batch scripts Autoruns Detection
-
+Active autorun detection usig batch scripts
 ________       _____       _____              _____ 
 ___  __ )_____ __  /______ __  /______ ____  ___  /_
 __  __  |  __ `/  __/  __ `/  __/  __ `/  / / /  __/
