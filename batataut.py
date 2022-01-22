@@ -2,19 +2,21 @@
 """
  Effective Autoruns Detection
  Find out which path in your file system running automaticly after restart => Autorun!
- Use the script as follow:
-    1) Run and Restart: python batataut.py --spread --output <output-path> --restart
-    2) View Results:    python batataut.py --results --output <output-path> 
-    3) Cleanup:         python batataut.py --delete --output <output-path> 
+ Use the script as follows:
+    1) Run and Restart: python batataut.py --spread --output <output-path> --restart 
+    2) Cleanup:         python batataut.py --delete --output <output-path> 
 
  Copyright (c) 2022 Sun Obziler and Barak Aharoni.  All Rights Reserved.
 """
 import win32api
 import pickle 
-import os, sys
+import os
+import sys
 import argparse
 from shutil import copyfile
 import datetime
+import glob
+
 
 
 __version__ = '12.1.22'
@@ -33,50 +35,24 @@ BANNER = """
 |                                                                      |
 | Created by Barak Aharoni & Sun Obziler                               |      
 +----------------------------------------------------------------------+
+
 """
-# TODO: echo everything to the pickle file.
+
 BATCH_SCRIPT ="""@echo off
-echo %~f0 > {} 
+for /F "usebackq tokens=1,2 delims==" %%i in (`wmic os get LocalDateTime /VALUE 2^>NUL`) do if '.%%i.'=='.LocalDateTime.' set ldt=%%j
+set ldt=%ldt:~0,4%-%ldt:~4,2%-%ldt:~6,2% %ldt:~8,2%:%ldt:~10,2%:%ldt:~12,6%
+echo script in path:     %~f0   ran at:   [%ldt%]  >> {} 
 """
 
 BATCH_NAME = "batataut{}.bat"
 
-# Dump dictionary to pickle file.
-def dumpDict(location_dict):
-    global output_path
-    with open(output_path, 'wb') as f:
-        pickle.dump(location_dict, f)
-
-# Load pickle to dictionary data
-def loadDict():
-    global output_path
-    with open(output_path, 'rb') as f:
-        data = pickle.load(f)
-    return data
-
-# Parsing and printing the dictionary data
-def parseDict():
-    location_dict = loadDict()
-    print("\nThose files are running automaticly after restart:\n")
-    for index, path in location_dict.items():
-        print("\t{}".format(path))
-
-# Get dictionary from pickle file, delete all generated bats.
-def cleanup(pickle_path):
-    print("\nStarting cleanup...\n")
-    location_dict = loadDict()
-    for index,path in location_dict.items():
-        try:
-            os.remove("{}\\{}".format(path,BATCH_NAME.format(index)))
-        except:
-            print("\tCould not remove: {}".format("{}\\{}".format(path,BATCH_NAME.format(index))))
         
 # Create bat file
 def createFile(outFolder,counter):
-    timestamp = datetime.datetime.now()
-    fileName = '{}\\{}_{}'.format(outFolder , BATCH_NAME.format(counter),timestamp) 
+    global outputPath
+    fileName = '{}\\{}'.format(outFolder , BATCH_NAME.format(counter)) 
     with open(fileName, 'w') as openFile:
-        openFile.write(BATCH_SCRIPT.format(fileName))
+        openFile.write(BATCH_SCRIPT.format(outputPath))
 
 # List all the drives on this system
 def findDrives():
@@ -84,7 +60,7 @@ def findDrives():
     return  [x.rstrip("\\") for x in drives.split('\000') if x] 
 
 # Spread the bat script to whole file system
-def spreadBat():
+def batWalk(deleteFlag):
     
     counter = 0 
     location_dict = {}
@@ -94,19 +70,25 @@ def spreadBat():
         
         # Checks if the drive is available and exists
         if(os.path.exists(drive)):
+
             print("Spread batch script to {} drive...".format(drive))
+            os.chdir(drive)
+            
+            # Copy the bat script to every directory
+            for root, dirs, files in os.walk("{}\\".format(drive), topdown = False): 
+                for name in dirs:
+                    dstDir = os.path.join(root, name)
 
-            # Change directory to root drive
-            if(drive == "D:"):
-
-                os.chdir(drive)
-                
-                # Copy the bat script to every directory
-                for root, dirs, files in os.walk("{}\\Barak\\scripts\\".format(drive), topdown = False): # TO CHANGE BACK
-                    for name in dirs:
-                        dstDir = os.path.join(root, name)
-
-                        print( '{}\\{}'.format(dstDir , BATCH_NAME.format(counter)) )
+                    print( '{}\\{}'.format(dstDir , BATCH_NAME.format(counter)) )
+                    
+                    if deleteFlag:
+                        try:
+                            
+                            toDelete = glob.glob("batataut*.bat")[0]
+                            os.remove(os.path.join(dstDir,toDelete))
+                        except:
+                            print("\tCould not delete file: {}".format(toDelete))
+                    else:
                         try:
                             createFile(dstDir, counter)
                             location_dict[counter] = dstDir
@@ -114,7 +96,7 @@ def spreadBat():
                             
                         except:
                             print("\tCould not created Bat at: " + dstDir)
-    #dumpDict(location_dict)
+
 
 # Restart the system
 def restartSystem():
@@ -123,10 +105,9 @@ def restartSystem():
 
 # Help menu
 def printHelp():
-    print("""Use the script as follow:
+    print("""Use the script as follows:
     1) Run and Restart: python batataut.py --spread --output <output-path> --restart
-    2) View Results:    python batataut.py --results --output <output-path> 
-    3) Cleanup:         python batataut.py --delete --output <output-path> 
+    2) Cleanup:         python batataut.py --delete --output <output-path> 
     """)
 
 def main():
@@ -134,7 +115,6 @@ def main():
     
     parser = argparse.ArgumentParser(description='Batataut - Effective Autoruns Detection')
     parser.add_argument('--output', help='Pickle output path')
-    parser.add_argument('--results', help='Print resoults' , action='store_true')
     parser.add_argument('--spread', help='Spread the batch file', action='store_true')
     parser.add_argument('--restart', help='Reboot the system', action='store_true')
     parser.add_argument('--delete', help='Delete evidences', action='store_true')
@@ -143,19 +123,16 @@ def main():
 
     global output_path
     if args.output:
-        output_path = args.output
+        outputPath = args.output
 
     if args.spread:
-        spreadBat()
+        batWalk(False)
         
     if args.restart:
         restartSystem()
 
-    if args.results:
-        parseDict()
-
     if args.delete:
-        cleanup(args.output)
+        batWalk(True)
 
 if __name__ == "__main__":
     main()
